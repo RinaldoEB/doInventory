@@ -1,24 +1,41 @@
 <?php 
+    session_start();
     include __DIR__ . "/../server/database.php";
     error_reporting(E_ALL);
-    ini_set('reporting_errors', 1);
+    ini_set('display_errors', 1);
 
     if(isset($_POST['register'])) {
-        $username = mysqli_real_escape_string($db,trim($_POST['username'])); 
-        $password = mysqli_real_escape_string($db,trim($_POST['password']));
-
-        $query = "INSERT INTO users (username, password) VALUES ('$username', '$password')";
+        $username = trim($_POST['username']); 
+        $password = trim($_POST['password']);
+        
         if(empty($username) || empty($password)) {
             $_SESSION['report_message'] = 'tidak boleh kosong';
+            exit;
+        }
+
+        $hash = password_hash($password,PASSWORD_DEFAULT);
+
+        $query = "INSERT INTO users (username, password_hash) VALUES (?,?)";
+        $stmt = $db->prepare($query);
+
+        if (!$stmt) {
+            $_SESSION['report_message'] = 'Prepare gagal';
+            exit;
+        }
+        $stmt->bind_param("ss",$username,$hash);
+
+        if($stmt->execute()) {
+            $_SESSION['report_message'] = 'Akun berhasil ditambah';
         }else {
-            if($db->query($query)) {
-                $_SESSION['report_message'] = 'Berhasil menambah Data';
-            }else {
-                $_SESSION['report_message'] = 'Data gagal Dibuat';
+            if($db->errno === 1062) {
+                $_SESSION['report_message'] = 'Username sudah terdaftar';
+            } else {
+                $_SESSION['report_message'] = 'Akun gagal dibuat';
             }
         }
 
 
+        $stmt->close();
         $db->close();
     }
 

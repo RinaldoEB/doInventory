@@ -6,7 +6,7 @@
     if(isset($_POST['login'])){
         $username = trim($_POST['username']); 
         $password = trim($_POST['password']); 
-        $query = "SELECT id_user, username, password FROM users WHERE username = ? LIMIT 1";
+        $query = "SELECT id_user, username, password_hash FROM users WHERE username = ? LIMIT 1";
         $stmt = $db->prepare($query);
         
         if(!$stmt) {
